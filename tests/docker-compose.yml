@@ -16,4 +16,4 @@ services:
       - https_proxy=$https_proxy
       - no_proxy=$no_proxy,nexus
     volumes:
-       - ./test_80.conf:/etc/nginx/conf.d/default.conf:ro
+       - ${PWD}/test_80.conf:/etc/nginx/conf.d/default.conf:ro
