@@ -28,6 +28,7 @@ fi
 echo "Check Nginx config"
 
 # setup test
+echo "# setup env test:"
 test_compose=docker-compose.test.yml
 test_config=test_80.conf
 docker-compose -f $test_compose up -d --no-build front
@@ -35,10 +36,12 @@ container=$(docker-compose  -f $test_compose ps  | awk ' NR > 2 { print $1 }')
 docker cp $test_config ${container}:/etc/nginx/conf.d/default.conf
 
 # run test
-docker-compose  -f $test_compose exec front nginx -t
+echo "# run test:"
+docker-compose  -f $test_compose exec -T front nginx -t
 test_result=$?
 
 # teardown
+echo "# teardown:"
 docker-compose  -f $test_compose stop
 docker-compose  -f $test_compose rm -fv
 
