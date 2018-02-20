@@ -4,6 +4,7 @@ set -x
 image_name=${1:? $(basename $0) IMAGE_NAME VERSION needed}
 version=${2:-latest}
 namespace=nginx
+test_service=front
 
 ret=0
 echo "Check tests/docker-compose.yml config"
@@ -17,7 +18,7 @@ else
 fi
 
 echo "Check Nginx version"
-docker-compose -p ${namespace} run --name "test-front" --rm front nginx -V
+docker-compose -p ${namespace} run --name "test-front" --rm $test_service nginx -V
 test_result=$?
 if [ "$test_result" -eq 0 ] ; then
   echo "[PASSED] nginx version"
@@ -32,14 +33,15 @@ echo "Check Nginx config"
 # setup test
 echo "# setup env test:"
 test_compose=docker-compose.test.yml
+test_service=front
 test_config=test_80.conf
-docker-compose -p ${namespace} -f $test_compose up -d --no-build front
-container=$(docker-compose -p ${namespace}  -f $test_compose ps  | awk ' NR > 2 { print $1 }')
+docker-compose -p ${namespace} -f $test_compose up -d --no-build $test_service
+container=$(docker-compose -p ${namespace}  -f $test_compose ps -q $test_service)
 docker cp $test_config ${container}:/etc/nginx/conf.d/default.conf
 
 # run test
 echo "# run test:"
-docker-compose -p ${namespace}  -f $test_compose exec -T front nginx -t
+docker-compose -p ${namespace}  -f $test_compose exec -T $test_service nginx -t
 test_result=$?
 
 # teardown
