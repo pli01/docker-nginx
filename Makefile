@@ -34,6 +34,18 @@ pull-docker: Dockerfile.$(VERSION)
 pull-docker-compose:
 	$(sudo) VERSION=$(VERSION) docker-compose $(compose_args) pull
 
+save-docker: Dockerfile.$(VERSION)
+	docker_image=$$(grep ^FROM Dockerfile.$(VERSION) | awk ' { print $$2 }') ; \
+		     docker_image_file=$$(echo $$docker_image| tr ':' '__') ; \
+	  docker image save $$docker_image | gzip -9c > $(DESTDIR)$${docker_image_file}.tar.gz ; \
+	  md5sum $(DESTDIR)$${docker_image_file}.tar.gz
+
+save-docker-compose: Dockerfile.$(VERSION)
+	docker_image=$$(docker-compose $(compose_args) config | python -c 'import sys, yaml, json; json.dump(yaml.load(sys.stdin), sys.stdout, indent=4)'  | jq -r '.services[].image') ; \
+	docker_image_file=$$(echo $$docker_image| tr '/' '_' | tr ':' '__') ; \
+	  docker image save $$docker_image | gzip -9c > $(DESTDIR)$${docker_image_file}.tar.gz ; \
+	  md5sum $(DESTDIR)$${docker_image_file}.tar.gz
+
 up:
 	$(sudo) docker-compose $(compose_args) up -d
 restart:
@@ -80,5 +92,10 @@ push:
 	bash ./tools/push.sh $(IMAGE_NAME) $(VERSION)
 	@echo '# $@ SUCCESS'
 
+push-docker:
+	@echo "# $@ STARTING"
+	docker_image=$$(grep ^FROM Dockerfile.$(VERSION) | awk ' { print $$2 }') ; \
+		     docker_image_name=$$(echo $$docker_image| awk -F: '{ print $$1}') ; \
+	bash ./tools/push.sh $${docker_image_name} $(VERSION)
 clean-image:
 	$(sudo) docker rmi $(IMAGE_NAME):$(VERSION) || true
