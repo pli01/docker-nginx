@@ -1,6 +1,5 @@
 #
-PACKAGENAME ?= docker-nginx
-IMAGE_NAME ?= ci-tool-stack/nginx
+include Makefile.version
 VERSION ?= $(shell [ -f VERSION ] && cat VERSION)
 
 project ?=
